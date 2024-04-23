@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git url: 'https://github.com/veerpal222/java.git'
+        git branch: 'master', url: 'https://github.com/veerpal222/java.git'
       }
     }
     stage('Build and Test with Maven') {
@@ -18,7 +18,7 @@ pipeline {
     }
     stage('Static Code Analysis with SonarQube') {
       environment {
-        SONAR_URL = "http://13.50.247.130:9000"
+        SONAR_URL = "http://16.16.198.24:9000"
       }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
@@ -42,24 +42,22 @@ pipeline {
       }
     }
     stage('Update Deployment File') {
-        environment {
-            GIT_REPO_NAME = "java"
-            GIT_USER_NAME = "veerpal222"
-        }
-        steps {
-            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                sh '''
-                    git config user.email "sanjay@gmail.com"
-                    git config user.name "sanjay"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
-                    git add spring-boot-app-manifests/deployment.yml
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
-                '''
-            }
+    environment {
+        GIT_REPO_NAME = "java"
+        GIT_USER_NAME = "veerpal222"
+    }
+    steps {
+        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+            sh '''
+                git config --global user.email "sanjay@gmail.com"
+                git config --global user.name "sanjay"
+                sed -i "s/13/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+                git add spring-boot-app-manifests/deployment.yml
+                git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+            '''
         }
     }
-    
+  }   
   }
 }
